@@ -1,0 +1,1573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Massage Scheduler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #e0e0e0;
+            background: #fafafa;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 500;
+            border: none;
+            background: none;
+            transition: all 0.2s;
+        }
+
+        .tab:hover {
+            background: #f0f0f0;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom: 3px solid #6366f1;
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 32px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin: 24px 0 16px;
+            color: #374151;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+
+        .date-option {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .date-option input[type="date"] {
+            margin-bottom: 8px;
+        }
+
+        .time-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .add-date-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 12px;
+        }
+
+        .add-date-btn:hover {
+            background: #4f46e5;
+        }
+
+        .remove-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .remove-btn:hover {
+            background: #dc2626;
+        }
+
+        .btn-primary {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            margin-top: 16px;
+        }
+
+        .btn-primary:hover {
+            background: #4f46e5;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #374151;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            margin-top: 16px;
+            margin-left: 8px;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .availability-group {
+            background: #f9fafb;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin-right: 8px;
+        }
+
+        .time-range {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .massage-preferences {
+            display: grid;
+            gap: 12px;
+        }
+
+        .preference-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .preference-option input[type="radio"],
+        .preference-option input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+
+        .preference-option label {
+            cursor: pointer;
+        }
+
+        .schedule-output {
+            background: #f9fafb;
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .schedule-header {
+            background: #6366f1;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+
+        .schedule-slot {
+            background: white;
+            padding: 16px;
+            border-left: 4px solid #6366f1;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .schedule-slot.break {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+
+        .slot-time {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .slot-details {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            color: #92400e;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            border: 1px solid #34d399;
+            color: #065f46;
+        }
+
+        .alert-info {
+            background: #dbeafe;
+            border: 1px solid #60a5fa;
+            color: #1e40af;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #6366f1;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        .response-list {
+            margin-top: 24px;
+        }
+
+        .response-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .calendar {
+            display: inline-block;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            padding: 16px;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .calendar-header button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 12px;
+            border-radius: 4px;
+        }
+
+        .calendar-header button:hover {
+            background: #f3f4f6;
+        }
+
+        .calendar-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            padding: 8px 4px;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .calendar-day:not(.empty):not(.other-month):hover {
+            background: #f3f4f6;
+        }
+
+        .calendar-day.empty,
+        .calendar-day.other-month {
+            color: #d1d5db;
+            cursor: default;
+        }
+
+        .calendar-day.selected {
+            background: #6366f1;
+            color: white;
+            font-weight: 600;
+        }
+
+        .calendar-day.today {
+            border-color: #6366f1;
+        }
+
+        .selected-date-tag {
+            display: inline-block;
+            background: #6366f1;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 4px;
+            font-size: 13px;
+        }
+
+        .time-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 6px;
+            max-width: 600px;
+        }
+
+        .time-slot {
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            background: white;
+            user-select: none;
+        }
+
+        .time-slot:hover {
+            border-color: #6366f1;
+            background: #f0f1ff;
+        }
+
+        .time-slot.selected {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+
+        .time-slot.in-range {
+            background: #c7d2fe;
+            border-color: #6366f1;
+        }
+
+        .availability-summary-item {
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        /* Resident view: hide admin tabs, show only the form */
+        .resident-view .tabs {
+            display: none;
+        }
+        .resident-view #admin-tab,
+        .resident-view #schedule-tab {
+            display: none !important;
+        }
+        .resident-view #resident-tab {
+            display: block !important;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+    </style>
+    <!-- Supabase client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container" id="app-container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('admin', event)">1. Admin Setup</button>
+            <button class="tab" onclick="switchTab('resident', event)">2. Resident Form</button>
+            <button class="tab" onclick="switchTab('schedule', event)">3. View Schedule</button>
+        </div>
+
+        <!-- ADMIN SETUP TAB -->
+        <div id="admin-tab" class="tab-content active">
+            <h1>Admin Setup</h1>
+            <p class="subtitle">Configure available dates and share the resident form link</p>
+
+            <div class="form-group">
+                <label>Session Name (optional)</label>
+                <input type="text" id="session-name" placeholder="e.g., February 2026 Massage">
+            </div>
+
+            <h2>Available Dates</h2>
+            <p style="color: #6b7280; margin-bottom: 16px;">Click dates on the calendar to select them</p>
+            <div id="calendar-container"></div>
+            <div id="selected-dates-display" style="margin-top: 16px; padding: 12px; background: #f9fafb; border-radius: 6px; display: none;">
+                <strong>Selected dates:</strong>
+                <div id="selected-dates-list" style="margin-top: 8px;"></div>
+            </div>
+
+            <button class="btn-primary" onclick="saveAdminSetup()">Submit Dates</button>
+            
+            <div id="admin-output" class="hidden" style="margin-top: 24px;">
+                <div class="alert alert-success">
+                    <strong>Setup saved!</strong> Share this link with residents:
+                    <div style="margin-top: 8px; display: flex; gap: 8px; align-items: center;">
+                        <div style="flex: 1; padding: 8px; background: white; border-radius: 4px; font-family: monospace; font-size: 14px;" id="form-link"></div>
+                        <button class="btn-secondary" style="margin: 0; white-space: nowrap;" onclick="navigator.clipboard.writeText(document.getElementById('form-link').textContent); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+                    </div>
+                </div>
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+                    <button class="btn-danger" onclick="deleteEvent()">Delete this event</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESIDENT FORM TAB -->
+        <div id="resident-tab" class="tab-content">
+            <h1>Massage Availability Form</h1>
+            <p class="subtitle">Let us know when you're available and your massage preferences</p>
+
+            <div class="form-group">
+                <label>Your Name</label>
+                <input type="text" id="resident-name" required>
+            </div>
+
+            <h2>Your Availability</h2>
+            <p style="color: #6b7280; margin-bottom: 16px;">Click a date to set your available hours for that day</p>
+            <div id="resident-calendar-container"></div>
+            
+            <div id="time-selector" class="hidden" style="margin-top: 24px;">
+                <h3 id="selected-date-title" style="margin-bottom: 16px;"></h3>
+                <div id="time-grid" style="margin-bottom: 16px;"></div>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn-secondary" onclick="clearTimeSelection()">Clear Times</button>
+                    <button class="btn-primary" onclick="saveTimeSelection()">Save Times for This Date</button>
+                </div>
+            </div>
+            
+            <div id="resident-availability-summary" class="hidden" style="margin-top: 24px; padding: 16px; background: #f9fafb; border-radius: 8px;">
+                <strong>Your availability:</strong>
+                <div id="availability-summary-list" style="margin-top: 12px;"></div>
+            </div>
+
+            <h2>Massage Preferences</h2>
+            <div class="form-group">
+                <label>Preferred Length</label>
+                <div class="massage-preferences">
+                    <div class="preference-option">
+                        <input type="radio" name="preferred-length" value="20" id="pref-20">
+                        <label for="pref-20">20 min clothed stretches ($30)</label>
+                    </div>
+                    <div class="preference-option">
+                        <input type="radio" name="preferred-length" value="50" id="pref-50" checked>
+                        <label for="pref-50">50 min massage ($70)</label>
+                    </div>
+                    <div class="preference-option">
+                        <input type="radio" name="preferred-length" value="80" id="pref-80">
+                        <label for="pref-80">80 min massage ($110)</label>
+                    </div>
+                    <div class="preference-option">
+                        <input type="radio" name="preferred-length" value="110" id="pref-110">
+                        <label for="pref-110">110 min massage ($150)</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Backup Preferences (optional)</label>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">Select other lengths you'd be willing to do if your preferred time doesn't fit</p>
+                <div class="massage-preferences" style="display: block;">
+                    <div class="preference-option" data-length="20">
+                        <input type="checkbox" name="backup-length" value="20" id="backup-20">
+                        <label for="backup-20" style="margin: 0;">20 min clothed stretches ($30)</label>
+                    </div>
+                    <div class="preference-option" data-length="50">
+                        <input type="checkbox" name="backup-length" value="50" id="backup-50">
+                        <label for="backup-50" style="margin: 0;">50 min massage ($70)</label>
+                    </div>
+                    <div class="preference-option" data-length="80">
+                        <input type="checkbox" name="backup-length" value="80" id="backup-80">
+                        <label for="backup-80" style="margin: 0;">80 min massage ($110)</label>
+                    </div>
+                    <div class="preference-option" data-length="110">
+                        <input type="checkbox" name="backup-length" value="110" id="backup-110">
+                        <label for="backup-110" style="margin: 0;">110 min massage ($150)</label>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-primary" onclick="submitResidentForm()">Submit Availability</button>
+
+            <div id="resident-output" class="hidden" style="margin-top: 24px;">
+                <div class="alert alert-success">
+                    <strong>Availability confirmed!</strong> Your response has been recorded. We'll notify you once the schedule is finalized.
+                </div>
+            </div>
+        </div>
+
+        <!-- SCHEDULE TAB -->
+        <div id="schedule-tab" class="tab-content">
+            <h1>Generated Schedule</h1>
+            <p class="subtitle">Optimal day and massage schedule based on responses</p>
+
+            <div id="schedule-container">
+                <div class="alert alert-info">
+                    No schedule generated yet. Collect resident responses first, then click "Generate Schedule" below.
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <button class="btn-primary" onclick="generateSchedule()">Generate Schedule</button>
+                <button class="btn-secondary" onclick="viewResponses()">View All Responses</button>
+                <button class="btn-danger" id="schedule-delete-btn" onclick="deleteEvent()" style="margin-left: auto; display: none;">Delete this event</button>
+            </div>
+
+            <div id="responses-view" class="hidden response-list">
+                <h2>All Responses</h2>
+                <div id="responses-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== SUPABASE CONFIG - Replace with your project credentials ==========
+        // Get these from: Supabase Dashboard > Project Settings > API
+        const SUPABASE_URL = 'https://celhlvfhvkvuyrnizdvq.supabase.co';      // e.g. https://xxxxx.supabase.co
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlbGhsdmZodmt2dXlybml6ZHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODQ5NzIsImV4cCI6MjA4NjE2MDk3Mn0.lDK_J_auh6n0K7rEPIveCWWlpWU4EG204IIxWzqIXPc';
+
+        let supabase = null;
+        if (SUPABASE_URL && SUPABASE_URL !== 'YOUR_SUPABASE_URL' && SUPABASE_ANON_KEY && SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY') {
+            const { createClient } = window.supabase || {};
+            if (createClient) supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+
+        // App state
+        let adminData = null;
+        let residentResponses = [];
+        let currentSessionId = null;  // UUID of the active session (from URL or just created)
+
+        // Get session ID from URL
+        function getSessionIdFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('session') || null;
+        }
+
+        // Load session from Supabase by ID
+        async function loadSession(sessionId) {
+            if (!supabase) return null;
+            const { data, error } = await supabase
+                .from('admin_sessions')
+                .select('*')
+                .eq('id', sessionId)
+                .single();
+            if (error) return null;
+            return data;
+        }
+
+        // Load responses for a session from Supabase
+        async function loadResponses(sessionId) {
+            if (!supabase) return [];
+            const { data, error } = await supabase
+                .from('resident_responses')
+                .select('*')
+                .eq('session_id', sessionId)
+                .order('created_at', { ascending: true });
+            if (error) return [];
+            return data || [];
+        }
+
+        // Convert DB row to adminData format
+        function sessionToAdminData(row) {
+            return {
+                sessionName: row.session_name,
+                minHours: row.min_hours,
+                dates: row.dates || []
+            };
+        }
+
+        // Convert DB row to response format
+        function rowToResponse(row) {
+            return {
+                name: row.name,
+                preferred: row.preferred,
+                backup: row.backup,
+                availability: row.availability || [],
+                timestamp: row.created_at
+            };
+        }
+
+        // Tab switching
+        function switchTab(tabName, evt) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            const tabIndex = tabName === 'admin' ? 0 : tabName === 'resident' ? 1 : 2;
+            document.querySelectorAll('.tab')[tabIndex].classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+
+            if (tabName === 'resident' && adminData) {
+                loadResidentForm();
+            }
+        }
+
+        // Calendar state
+        let selectedDates = new Set();
+        let currentMonth = new Date();
+        currentMonth.setDate(1);
+
+        // Initialize calendar on load
+        function initCalendar() {
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const container = document.getElementById('calendar-container');
+            const year = currentMonth.getFullYear();
+            const month = currentMonth.getMonth();
+            
+            const monthName = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            // Get first day of month and number of days
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            let html = `
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <button onclick="changeMonth(-1)">←</button>
+                        <div class="calendar-title">${monthName}</div>
+                        <button onclick="changeMonth(1)">→</button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="calendar-day-header">Sun</div>
+                        <div class="calendar-day-header">Mon</div>
+                        <div class="calendar-day-header">Tue</div>
+                        <div class="calendar-day-header">Wed</div>
+                        <div class="calendar-day-header">Thu</div>
+                        <div class="calendar-day-header">Fri</div>
+                        <div class="calendar-day-header">Sat</div>
+            `;
+            
+            // Empty cells before first day
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day empty"></div>';
+            }
+            
+            // Days of month
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                date.setHours(0, 0, 0, 0);
+                const dateStr = date.toISOString().split('T')[0];
+                const isSelected = selectedDates.has(dateStr);
+                const isToday = date.getTime() === today.getTime();
+                
+                const classes = ['calendar-day'];
+                if (isSelected) classes.push('selected');
+                if (isToday) classes.push('today');
+                
+                html += `<div class="${classes.join(' ')}" onclick="toggleDate('${dateStr}')">${day}</div>`;
+            }
+            
+            html += '</div></div>';
+            container.innerHTML = html;
+            
+            updateSelectedDatesDisplay();
+        }
+
+        function changeMonth(delta) {
+            currentMonth.setMonth(currentMonth.getMonth() + delta);
+            renderCalendar();
+        }
+
+        function toggleDate(dateStr) {
+            if (selectedDates.has(dateStr)) {
+                selectedDates.delete(dateStr);
+            } else {
+                selectedDates.add(dateStr);
+            }
+            renderCalendar();
+        }
+
+        function updateSelectedDatesDisplay() {
+            const display = document.getElementById('selected-dates-display');
+            const list = document.getElementById('selected-dates-list');
+            
+            if (selectedDates.size === 0) {
+                display.style.display = 'none';
+                return;
+            }
+            
+            display.style.display = 'block';
+            
+            const sortedDates = Array.from(selectedDates).sort();
+            list.innerHTML = sortedDates.map(dateStr => {
+                const date = new Date(dateStr + 'T12:00:00');
+                const formatted = date.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                return `<span class="selected-date-tag">${formatted}</span>`;
+            }).join('');
+        }
+
+        async function saveAdminSetup() {
+            if (!supabase) {
+                alert('Supabase not configured. Add your SUPABASE_URL and SUPABASE_ANON_KEY to index.html');
+                return;
+            }
+
+            const sessionName = document.getElementById('session-name').value;
+            const minHours = 7; // Always 7 hours minimum
+            const dates = [];
+
+            if (selectedDates.size === 0) {
+                alert('Please select at least one date from the calendar');
+                return;
+            }
+
+            selectedDates.forEach(dateStr => {
+                dates.push({ date: dateStr });
+            });
+
+            const sortedDates = dates.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const { data: session, error } = await supabase
+                .from('admin_sessions')
+                .insert({
+                    session_name: sessionName || 'Massage Session',
+                    min_hours: minHours,
+                    dates: sortedDates
+                })
+                .select()
+                .single();
+
+            if (error) {
+                alert('Error saving: ' + error.message);
+                return;
+            }
+
+            currentSessionId = session.id;
+            adminData = sessionToAdminData(session);
+
+            // Update URL so admin has the session link (admin view - no view param)
+            const baseUrl = window.location.href.split('?')[0];
+            const adminUrl = baseUrl + '?session=' + currentSessionId;
+            const residentUrl = baseUrl + '?view=resident&session=' + currentSessionId;
+            window.history.replaceState({}, '', adminUrl);
+
+            // Show success message
+            const output = document.getElementById('admin-output');
+            document.getElementById('form-link').textContent = residentUrl;
+            output.classList.remove('hidden');
+            updateDeleteButtonVisibility();
+        }
+
+        async function deleteEvent() {
+            if (!supabase || !currentSessionId) return;
+            if (!confirm('Delete this event? All resident responses will be permanently removed.')) return;
+
+            const { error } = await supabase
+                .from('admin_sessions')
+                .delete()
+                .eq('id', currentSessionId);
+
+            if (error) {
+                alert('Error deleting: ' + error.message);
+                return;
+            }
+
+            currentSessionId = null;
+            adminData = null;
+            residentResponses = [];
+
+            // Clear URL and refresh to show fresh admin setup
+            window.location.href = window.location.href.split('?')[0];
+        }
+
+        function updateDeleteButtonVisibility() {
+            const btn = document.getElementById('schedule-delete-btn');
+            if (btn) btn.style.display = currentSessionId ? 'inline-block' : 'none';
+        }
+
+        // Resident Form Functions
+        let residentCalendarMonth = new Date();
+        residentCalendarMonth.setDate(1);
+        let residentAvailability = {}; // { 'YYYY-MM-DD': { from: 'HH:MM', until: 'HH:MM' } }
+        let currentSelectedDate = null;
+        let isDragging = false;
+        let dragStartSlot = null;
+
+        // Update backup options when preferred changes
+        function updateBackupOptions() {
+            const preferred = document.querySelector('input[name="preferred-length"]:checked');
+            if (!preferred) return;
+            
+            const preferredValue = preferred.value;
+            
+            // Show/hide backup options based on preferred
+            document.querySelectorAll('.preference-option[data-length]').forEach(option => {
+                const length = option.getAttribute('data-length');
+                const checkbox = option.querySelector('input[type="checkbox"]');
+                
+                if (length === preferredValue) {
+                    option.style.display = 'none';
+                    checkbox.checked = false; // Uncheck if it was checked
+                } else {
+                    option.style.display = 'flex';
+                }
+            });
+        }
+
+        // Add event listeners to preferred length radios
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('input[name="preferred-length"]').forEach(radio => {
+                radio.addEventListener('change', updateBackupOptions);
+            });
+            // Run once on load
+            updateBackupOptions();
+        });
+
+        function loadResidentForm() {
+            if (!adminData) {
+                document.getElementById('resident-calendar-container').innerHTML = 
+                    '<div class="alert alert-warning">Admin setup not complete yet.</div>';
+                return;
+            }
+
+            renderResidentCalendar();
+        }
+
+        function renderResidentCalendar() {
+            const container = document.getElementById('resident-calendar-container');
+            const year = residentCalendarMonth.getFullYear();
+            const month = residentCalendarMonth.getMonth();
+            
+            const monthName = residentCalendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            // Get available dates from admin
+            const availableDates = new Set(adminData.dates.map(d => d.date));
+            
+            let html = `
+                <div class="calendar">
+                    <div class="calendar-header">
+                        <button onclick="changeResidentMonth(-1)">←</button>
+                        <div class="calendar-title">${monthName}</div>
+                        <button onclick="changeResidentMonth(1)">→</button>
+                    </div>
+                    <div class="calendar-grid">
+                        <div class="calendar-day-header">Sun</div>
+                        <div class="calendar-day-header">Mon</div>
+                        <div class="calendar-day-header">Tue</div>
+                        <div class="calendar-day-header">Wed</div>
+                        <div class="calendar-day-header">Thu</div>
+                        <div class="calendar-day-header">Fri</div>
+                        <div class="calendar-day-header">Sat</div>
+            `;
+            
+            for (let i = 0; i < firstDay; i++) {
+                html += '<div class="calendar-day empty"></div>';
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(year, month, day);
+                date.setHours(0, 0, 0, 0);
+                const dateStr = date.toISOString().split('T')[0];
+                const isAvailable = availableDates.has(dateStr);
+                const hasAvailability = residentAvailability[dateStr];
+                const isToday = date.getTime() === today.getTime();
+                
+                const classes = ['calendar-day'];
+                if (!isAvailable) classes.push('other-month');
+                if (hasAvailability) classes.push('selected');
+                if (isToday && isAvailable) classes.push('today');
+                
+                const onclick = isAvailable ? `onclick="selectResidentDate('${dateStr}')"` : '';
+                
+                html += `<div class="${classes.join(' ')}" ${onclick}>${day}</div>`;
+            }
+            
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        function changeResidentMonth(delta) {
+            residentCalendarMonth.setMonth(residentCalendarMonth.getMonth() + delta);
+            renderResidentCalendar();
+        }
+
+        function selectResidentDate(dateStr) {
+            currentSelectedDate = dateStr;
+            const date = new Date(dateStr + 'T12:00:00');
+            const formatted = date.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            document.getElementById('selected-date-title').textContent = formatted;
+            document.getElementById('time-selector').classList.remove('hidden');
+            
+            renderTimeGrid(dateStr);
+        }
+
+        function renderTimeGrid(dateStr) {
+            const grid = document.getElementById('time-grid');
+            
+            // Generate 30-min slots from 8am to 8pm
+            const slots = [];
+            for (let hour = 8; hour <= 20; hour++) {
+                for (let min = 0; min < 60; min += 30) {
+                    const time = `${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`;
+                    slots.push(time);
+                }
+            }
+            
+            const existing = residentAvailability[dateStr];
+            let selectedSlots = new Set();
+            
+            if (existing) {
+                const fromIdx = slots.indexOf(existing.from);
+                const untilIdx = slots.indexOf(existing.until);
+                for (let i = fromIdx; i <= untilIdx; i++) {
+                    selectedSlots.add(slots[i]);
+                }
+            }
+            
+            let html = '<div class="time-grid">';
+            slots.forEach((slot, idx) => {
+                const isSelected = selectedSlots.has(slot);
+                const displayTime = formatTimeSlot(slot);
+                html += `<div class="time-slot ${isSelected ? 'selected' : ''}" 
+                    data-slot="${slot}" 
+                    data-idx="${idx}"
+                    onmousedown="startDrag(${idx})"
+                    onmouseenter="continueDrag(${idx})"
+                    onmouseup="endDrag()">${displayTime}</div>`;
+            });
+            html += '</div>';
+            
+            grid.innerHTML = html;
+        }
+
+        function formatTimeSlot(time) {
+            const [hour, min] = time.split(':').map(Number);
+            const period = hour >= 12 ? 'pm' : 'am';
+            const displayHour = hour > 12 ? hour - 12 : (hour === 0 ? 12 : hour);
+            return min === 0 ? `${displayHour}${period}` : `${displayHour}:${min}${period}`;
+        }
+
+        function startDrag(idx) {
+            isDragging = true;
+            dragStartSlot = idx;
+            
+            // Check if we're starting on a selected slot - if so, we're deselecting
+            const startSlot = document.querySelector(`[data-idx="${idx}"]`);
+            const isDeselecting = startSlot.classList.contains('selected');
+            
+            // Store this for the drag operation
+            window.dragMode = isDeselecting ? 'deselect' : 'select';
+            
+            toggleSlot(idx);
+        }
+
+        function continueDrag(idx) {
+            if (!isDragging) return;
+            
+            const slots = document.querySelectorAll('.time-slot');
+            const start = Math.min(dragStartSlot, idx);
+            const end = Math.max(dragStartSlot, idx);
+            
+            // Apply selection/deselection to the drag range
+            slots.forEach((slot, i) => {
+                if (i >= start && i <= end) {
+                    if (window.dragMode === 'select') {
+                        slot.classList.add('selected');
+                    } else {
+                        slot.classList.remove('selected');
+                    }
+                }
+            });
+        }
+
+        function endDrag() {
+            isDragging = false;
+            dragStartSlot = null;
+            window.dragMode = null;
+        }
+
+        function toggleSlot(idx) {
+            const slot = document.querySelector(`[data-idx="${idx}"]`);
+            if (window.dragMode === 'select') {
+                slot.classList.add('selected');
+            } else {
+                slot.classList.remove('selected');
+            }
+        }
+
+        function clearTimeSelection() {
+            document.querySelectorAll('.time-slot').forEach(slot => {
+                slot.classList.remove('selected', 'in-range');
+            });
+        }
+
+        function saveTimeSelection() {
+            const selectedSlots = Array.from(document.querySelectorAll('.time-slot.selected'))
+                .map(slot => slot.getAttribute('data-slot'))
+                .sort();
+            
+            if (selectedSlots.length === 0) {
+                delete residentAvailability[currentSelectedDate];
+            } else {
+                // Find earliest and latest selected times
+                residentAvailability[currentSelectedDate] = {
+                    from: selectedSlots[0],
+                    until: selectedSlots[selectedSlots.length - 1]
+                };
+            }
+            
+            renderResidentCalendar();
+            updateAvailabilitySummary();
+            document.getElementById('time-selector').classList.add('hidden');
+        }
+
+        function updateAvailabilitySummary() {
+            const summary = document.getElementById('resident-availability-summary');
+            const list = document.getElementById('availability-summary-list');
+            
+            const dates = Object.keys(residentAvailability).sort();
+            
+            if (dates.length === 0) {
+                summary.classList.add('hidden');
+                return;
+            }
+            
+            summary.classList.remove('hidden');
+            
+            list.innerHTML = dates.map(dateStr => {
+                const date = new Date(dateStr + 'T12:00:00');
+                const formatted = date.toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric' 
+                });
+                const avail = residentAvailability[dateStr];
+                return `<div class="availability-summary-item">${formatted}: ${formatTimeSlot(avail.from)} - ${formatTimeSlot(avail.until)}</div>`;
+            }).join('');
+        }
+
+        // Stop dragging when mouse leaves the grid
+        document.addEventListener('mouseup', endDrag);
+
+        async function submitResidentForm() {
+            if (!supabase) {
+                alert('Supabase not configured. Add your SUPABASE_URL and SUPABASE_ANON_KEY to index.html');
+                return;
+            }
+
+            if (!currentSessionId) {
+                alert('Session not found. Please use the link shared by the admin.');
+                return;
+            }
+
+            const name = document.getElementById('resident-name').value.trim();
+            if (!name) {
+                alert('Please enter your name');
+                return;
+            }
+
+            const preferred = document.querySelector('input[name="preferred-length"]:checked').value;
+            const backupCheckboxes = document.querySelectorAll('input[name="backup-length"]:checked');
+            const backup = Array.from(backupCheckboxes).map(cb => parseInt(cb.value));
+            
+            if (Object.keys(residentAvailability).length === 0) {
+                alert('Please select at least one date and set your available times');
+                return;
+            }
+
+            const availability = Object.keys(residentAvailability).map(date => ({
+                date,
+                from: residentAvailability[date].from,
+                until: residentAvailability[date].until
+            }));
+
+            const { error } = await supabase
+                .from('resident_responses')
+                .insert({
+                    session_id: currentSessionId,
+                    name,
+                    preferred: parseInt(preferred),
+                    backup: backup.length > 0 ? backup : null,
+                    availability
+                });
+
+            if (error) {
+                alert('Error submitting: ' + error.message);
+                return;
+            }
+
+            // Show success
+            document.getElementById('resident-output').classList.remove('hidden');
+            
+            // Scroll to confirmation
+            document.getElementById('resident-output').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            
+            // Reset form after longer delay so they can see the confirmation
+            setTimeout(() => {
+                document.getElementById('resident-name').value = '';
+                document.querySelectorAll('input[name="backup-length"]').forEach(cb => cb.checked = false);
+                residentAvailability = {};
+                renderResidentCalendar();
+                updateAvailabilitySummary();
+                document.getElementById('time-selector').classList.add('hidden');
+                document.getElementById('resident-output').classList.add('hidden');
+            }, 4000);
+        }
+
+        // Schedule Generation Functions
+        async function generateSchedule() {
+            if (!currentSessionId || !adminData) {
+                alert('No session loaded. Create one in Admin Setup first.');
+                return;
+            }
+
+            // Fetch fresh responses from Supabase
+            const responses = await loadResponses(currentSessionId);
+            residentResponses = responses.map(rowToResponse);
+
+            if (residentResponses.length === 0) {
+                alert('No resident responses yet. Share the form link and collect responses first.');
+                return;
+            }
+
+            // Find best date
+            const dateScores = {};
+            
+            adminData.dates.forEach(dateOption => {
+                dateScores[dateOption.date] = {
+                    count: 0,
+                    people: []
+                };
+            });
+
+            // Count availability per date
+            residentResponses.forEach(response => {
+                response.availability.forEach(avail => {
+                    if (dateScores[avail.date]) {
+                        dateScores[avail.date].count++;
+                        dateScores[avail.date].people.push({
+                            name: response.name,
+                            from: avail.from,
+                            until: avail.until,
+                            preferred: response.preferred,
+                            backup: response.backup
+                        });
+                    }
+                });
+            });
+
+            // Find date with most people
+            let bestDate = null;
+            let maxCount = 0;
+
+            Object.keys(dateScores).forEach(date => {
+                if (dateScores[date].count > maxCount) {
+                    maxCount = dateScores[date].count;
+                    bestDate = date;
+                }
+            });
+
+            if (!bestDate) {
+                alert('No overlapping availability found');
+                return;
+            }
+
+            // Find optimal start time for that date
+            const bestDateData = dateScores[bestDate];
+            
+            // Generate possible start times (every 15 min from 8:30am to 5pm)
+            const possibleStartTimes = [];
+            // Start at 8:30am
+            possibleStartTimes.push('08:30');
+            possibleStartTimes.push('08:45');
+            // Then 9am onwards
+            for (let hour = 9; hour <= 17; hour++) {
+                for (let min = 0; min < 60; min += 15) {
+                    possibleStartTimes.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
+                }
+            }
+
+            let bestSchedule = null;
+            let maxFit = 0;
+
+            possibleStartTimes.forEach(startTime => {
+                const schedule = buildSchedule(bestDateData.people, startTime);
+                if (schedule.appointments.length > maxFit) {
+                    maxFit = schedule.appointments.length;
+                    bestSchedule = schedule;
+                    bestSchedule.startTime = startTime;
+                }
+            });
+
+            // Display schedule
+            displaySchedule(bestDate, bestSchedule, bestDateData.people.length);
+        }
+
+        function buildSchedule(people, startTime) {
+            const schedule = { appointments: [], breaks: [], totalHours: 0, totalCost: 0 };
+            const [startHour, startMin] = startTime.split(':').map(Number);
+            let currentTime = startHour * 60 + startMin; // minutes since midnight
+            let lastBreak = currentTime;
+
+            // Sort people by preferred duration (longest first for efficiency)
+            const sortedPeople = [...people].sort((a, b) => b.preferred - a.preferred);
+
+            sortedPeople.forEach(person => {
+                const [fromHour, fromMin] = person.from.split(':').map(Number);
+                const [untilHour, untilMin] = person.until.split(':').map(Number);
+                const availFrom = fromHour * 60 + fromMin;
+                const availUntil = untilHour * 60 + untilMin;
+
+                // Try preferred duration first
+                let duration = person.preferred;
+                let slotEnd = currentTime + duration + 10; // +10 for turnover
+
+                let foundSlot = false;
+
+                // If preferred doesn't fit, try backup options
+                if (slotEnd > availUntil && person.backup && Array.isArray(person.backup)) {
+                    for (const backupDuration of person.backup) {
+                        duration = backupDuration;
+                        slotEnd = currentTime + duration + 10;
+                        if (slotEnd <= availUntil) {
+                            foundSlot = true;
+                            break;
+                        }
+                    }
+                } else if (slotEnd <= availUntil) {
+                    foundSlot = true;
+                }
+
+                // Check if person is available and duration fits
+                if (currentTime >= availFrom && foundSlot) {
+                    // Check if we need a break (every 3-4 hours)
+                    if (currentTime - lastBreak >= 180) { // 3 hours
+                        schedule.breaks.push({
+                            time: currentTime,
+                            duration: 20
+                        });
+                        currentTime += 20;
+                        lastBreak = currentTime;
+                    }
+
+                    schedule.appointments.push({
+                        name: person.name,
+                        time: currentTime,
+                        duration: duration,
+                        cost: getCost(duration)
+                    });
+
+                    schedule.totalCost += getCost(duration);
+                    currentTime += duration + 10; // appointment + turnover
+                }
+            });
+
+            schedule.totalHours = (currentTime - (startHour * 60 + startMin)) / 60;
+            return schedule;
+        }
+
+        function getCost(duration) {
+            const costs = { 20: 30, 50: 70, 80: 110, 110: 150 };
+            return costs[duration] || 0;
+        }
+
+        function displaySchedule(date, schedule, totalAvailable) {
+            const container = document.getElementById('schedule-container');
+            const dateStr = new Date(date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                month: 'long',
+                day: 'numeric',
+                year: 'numeric'
+            });
+
+            const meetsMinimum = schedule.totalHours >= adminData.minHours;
+
+            let html = `
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value">${dateStr}</div>
+                        <div class="stat-label">Selected Date</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${schedule.appointments.length} / ${totalAvailable}</div>
+                        <div class="stat-label">People Scheduled</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${schedule.totalHours.toFixed(1)}h</div>
+                        <div class="stat-label">Total Hours</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">$${schedule.totalCost}</div>
+                        <div class="stat-label">Total Revenue</div>
+                    </div>
+                </div>
+
+                ${!meetsMinimum ? `
+                    <div class="alert alert-warning">
+                        ⚠️ Only ${schedule.totalHours.toFixed(1)} hours scheduled. Need ${adminData.minHours}+ hours minimum.
+                    </div>
+                ` : `
+                    <div class="alert alert-success">
+                        ✓ ${schedule.totalHours.toFixed(1)} hours scheduled - meets ${adminData.minHours}h minimum!
+                    </div>
+                `}
+
+                <div class="schedule-header">
+                    <h2 style="margin: 0; color: white;">Massage Schedule</h2>
+                    <div style="margin-top: 4px; opacity: 0.9;">Start: ${schedule.startTime} | End: ${formatTime(schedule.appointments[schedule.appointments.length - 1].time + schedule.appointments[schedule.appointments.length - 1].duration)}</div>
+                </div>
+
+                <div class="schedule-output">
+            `;
+
+            // Combine appointments and breaks, then sort by time
+            const allSlots = [
+                ...schedule.appointments.map(apt => ({ ...apt, type: 'appointment' })),
+                ...schedule.breaks.map(brk => ({ ...brk, type: 'break' }))
+            ].sort((a, b) => a.time - b.time);
+
+            allSlots.forEach(slot => {
+                if (slot.type === 'break') {
+                    html += `
+                        <div class="schedule-slot break">
+                            <div class="slot-time">${formatTime(slot.time)} - BREAK (20 min)</div>
+                            <div class="slot-details">Masseuse break</div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="schedule-slot">
+                            <div class="slot-time">${formatTime(slot.time)} - ${slot.name}</div>
+                            <div class="slot-details">${slot.duration} min massage · $${slot.cost}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function formatTime(minutes) {
+            const hours = Math.floor(minutes / 60);
+            const mins = minutes % 60;
+            const period = hours >= 12 ? 'pm' : 'am';
+            const displayHours = hours > 12 ? hours - 12 : (hours === 0 ? 12 : hours);
+            return `${displayHours}:${mins.toString().padStart(2, '0')}${period}`;
+        }
+
+        async function viewResponses() {
+            const container = document.getElementById('responses-container');
+            const view = document.getElementById('responses-view');
+
+            if (!currentSessionId) {
+                alert('No session loaded.');
+                return;
+            }
+
+            // Fetch fresh responses from Supabase
+            const responses = await loadResponses(currentSessionId);
+            residentResponses = responses.map(rowToResponse);
+
+            if (residentResponses.length === 0) {
+                alert('No responses yet');
+                return;
+            }
+
+            let html = '';
+            residentResponses.forEach((response, idx) => {
+                const backupText = response.backup && response.backup.length > 0 
+                    ? ` | Backup: ${response.backup.join(', ')} min` 
+                    : '';
+                
+                html += `
+                    <div class="response-item">
+                        <strong>${response.name}</strong><br>
+                        Preferred: ${response.preferred} min ($${getCost(response.preferred)})${backupText}<br>
+                        <small style="color: #6b7280;">
+                            Available: ${response.availability.map(a => {
+                                const date = new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                return `${date} (${a.from}-${a.until})`;
+                            }).join(', ')}
+                        </small>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            view.classList.remove('hidden');
+        }
+
+        // Check URL params on load
+        window.addEventListener('load', async () => {
+            initCalendar(); // Initialize the calendar
+            
+            const params = new URLSearchParams(window.location.search);
+            const sessionId = params.get('session');
+            const view = params.get('view');
+
+            if (sessionId && supabase) {
+                const session = await loadSession(sessionId);
+                if (session) {
+                    currentSessionId = sessionId;
+                    adminData = sessionToAdminData(session);
+                    // If admin view, show the resident link so they can copy it again
+                    if (view !== 'resident') {
+                        const baseUrl = window.location.href.split('?')[0];
+                        const residentUrl = baseUrl + '?view=resident&session=' + sessionId;
+                        document.getElementById('form-link').textContent = residentUrl;
+                        document.getElementById('admin-output').classList.remove('hidden');
+                        updateDeleteButtonVisibility();
+                    }
+                }
+            }
+
+            if (view === 'resident' && adminData) {
+                document.getElementById('app-container').classList.add('resident-view');
+                switchTab('resident');
+            } else {
+                document.getElementById('app-container').classList.remove('resident-view');
+            }
+        });
+    </script>
+</body>
+</html>
