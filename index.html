@@ -501,8 +501,8 @@
             background: #b91c1c;
         }
     </style>
-    <!-- Supabase client -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Supabase client - explicit UMD path (root URL can return wrong file) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
     <div class="container" id="app-container">
