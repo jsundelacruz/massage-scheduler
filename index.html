@@ -657,7 +657,7 @@
         const SUPABASE_URL = 'https://celhlvfhvkvuyrnizdvq.supabase.co';      // e.g. https://xxxxx.supabase.co
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNlbGhsdmZodmt2dXlybml6ZHZxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1ODQ5NzIsImV4cCI6MjA4NjE2MDk3Mn0.lDK_J_auh6n0K7rEPIveCWWlpWU4EG204IIxWzqIXPc';
 
-        let supabase = null;
+        let supabaseClient = null;
         // Load Supabase dynamically so calendar/tabs work even if CDN fails
         (function loadSupabase() {
             if (SUPABASE_URL === 'YOUR_SUPABASE_URL' || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') return;
@@ -666,7 +666,7 @@
             s.onload = function() {
                 try {
                     var lib = window.supabase || {};
-                    if (lib.createClient) supabase = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    if (lib.createClient) supabaseClient = lib.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
                 } catch (e) { console.warn('Supabase init failed:', e); }
             };
             s.onerror = function() { console.warn('Supabase script failed to load'); };
@@ -686,8 +686,8 @@
 
         // Load session from Supabase by ID
         async function loadSession(sessionId) {
-            if (!supabase) return null;
-            const { data, error } = await supabase
+            if (!supabaseClient) return null;
+            const { data, error } = await supabaseClient
                 .from('admin_sessions')
                 .select('*')
                 .eq('id', sessionId)
@@ -698,8 +698,8 @@
 
         // Load responses for a session from Supabase
         async function loadResponses(sessionId) {
-            if (!supabase) return [];
-            const { data, error } = await supabase
+            if (!supabaseClient) return [];
+            const { data, error } = await supabaseClient
                 .from('resident_responses')
                 .select('*')
                 .eq('session_id', sessionId)
@@ -847,7 +847,7 @@
         }
 
         async function saveAdminSetup() {
-            if (!supabase) {
+            if (!supabaseClient) {
                 alert('Supabase not configured. Add your SUPABASE_URL and SUPABASE_ANON_KEY to index.html');
                 return;
             }
@@ -867,7 +867,7 @@
 
             const sortedDates = dates.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-            const { data: session, error } = await supabase
+            const { data: session, error } = await supabaseClient
                 .from('admin_sessions')
                 .insert({
                     session_name: sessionName || 'Massage Session',
@@ -899,10 +899,10 @@
         }
 
         async function deleteEvent() {
-            if (!supabase || !currentSessionId) return;
+            if (!supabaseClient || !currentSessionId) return;
             if (!confirm('Delete this event? All resident responses will be permanently removed.')) return;
 
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('admin_sessions')
                 .delete()
                 .eq('id', currentSessionId);
@@ -1200,7 +1200,7 @@
         document.addEventListener('mouseup', endDrag);
 
         async function submitResidentForm() {
-            if (!supabase) {
+            if (!supabaseClient) {
                 alert('Supabase not configured. Add your SUPABASE_URL and SUPABASE_ANON_KEY to index.html');
                 return;
             }
@@ -1231,7 +1231,7 @@
                 until: residentAvailability[date].until
             }));
 
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('resident_responses')
                 .insert({
                     session_id: currentSessionId,
@@ -1561,7 +1561,7 @@
             const sessionId = params.get('session');
             const view = params.get('view');
 
-            if (sessionId && supabase) {
+            if (sessionId && supabaseClient) {
                 const session = await loadSession(sessionId);
                 if (session) {
                     currentSessionId = sessionId;
