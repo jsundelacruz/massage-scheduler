@@ -375,6 +375,66 @@
             border-radius: 10px;
             margin-bottom: 8px;
             border: 1px solid rgba(45,45,38,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .response-item-details {
+            flex: 1;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.hidden {
+            display: none;
+        }
+
+        .modal-content {
+            background: var(--bg-light);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 480px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-content h2 {
+            margin: 0 0 20px 0;
+        }
+
+        .availability-edit-list {
+            margin: 12px 0;
+        }
+
+        .availability-edit-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr auto;
+            gap: 8px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .availability-edit-row select {
+            padding: 8px 10px;
+        }
+
+        .availability-edit-row .remove-btn {
+            padding: 4px 10px;
+            margin: 0;
+            font-size: 18px;
+            line-height: 1;
         }
 
         .hidden {
@@ -716,6 +776,73 @@
             <div id="responses-view" class="hidden response-list">
                 <h2>All Responses</h2>
                 <div id="responses-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Edit Response Modal -->
+    <div id="admin-edit-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeAdminEditModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2>Edit Availability</h2>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="admin-edit-name">
+            </div>
+            <div class="form-group">
+                <label>Preferred Length</label>
+                <div class="massage-preferences">
+                    <div class="preference-option">
+                        <input type="radio" name="admin-edit-preferred" value="20" id="admin-pref-20">
+                        <label for="admin-pref-20">20 min clothed stretches ($30)</label>
+                    </div>
+                    <div class="preference-option">
+                        <input type="radio" name="admin-edit-preferred" value="50" id="admin-pref-50">
+                        <label for="admin-pref-50">50 min massage ($70)</label>
+                    </div>
+                    <div class="preference-option">
+                        <input type="radio" name="admin-edit-preferred" value="80" id="admin-pref-80">
+                        <label for="admin-pref-80">80 min massage ($110)</label>
+                    </div>
+                    <div class="preference-option">
+                        <input type="radio" name="admin-edit-preferred" value="110" id="admin-pref-110">
+                        <label for="admin-pref-110">110 min massage ($150)</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Backup Preferences (optional)</label>
+                <div class="massage-preferences">
+                    <div class="preference-option" data-length="20">
+                        <input type="checkbox" name="admin-edit-backup" value="20" id="admin-backup-20">
+                        <label for="admin-backup-20" style="margin: 0;">20 min</label>
+                    </div>
+                    <div class="preference-option" data-length="50">
+                        <input type="checkbox" name="admin-edit-backup" value="50" id="admin-backup-50">
+                        <label for="admin-backup-50" style="margin: 0;">50 min</label>
+                    </div>
+                    <div class="preference-option" data-length="80">
+                        <input type="checkbox" name="admin-edit-backup" value="80" id="admin-backup-80">
+                        <label for="admin-backup-80" style="margin: 0;">80 min</label>
+                    </div>
+                    <div class="preference-option" data-length="110">
+                        <input type="checkbox" name="admin-edit-backup" value="110" id="admin-backup-110">
+                        <label for="admin-backup-110" style="margin: 0;">110 min</label>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Availability</label>
+                <div id="admin-edit-availability-list" class="availability-edit-list"></div>
+                <div style="display: flex; gap: 8px; align-items: center; margin-top: 8px;">
+                    <select id="admin-add-date">
+                        <option value="">Add a date...</option>
+                    </select>
+                    <button type="button" class="btn-secondary" style="margin: 0;" onclick="adminAddAvailabilityDate()">Add</button>
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn-primary" onclick="saveAdminEdit()">Save Changes</button>
+                <button class="btn-secondary" onclick="closeAdminEditModal()">Cancel</button>
             </div>
         </div>
     </div>
@@ -1716,29 +1843,34 @@
 
             // Fetch fresh responses from Supabase
             const responses = await loadResponses(currentSessionId);
+            lastViewedResponseRows = responses;
             residentResponses = responses.map(rowToResponse);
 
-            if (residentResponses.length === 0) {
+            if (responses.length === 0) {
                 alert('No responses yet');
                 return;
             }
 
             let html = '';
-            residentResponses.forEach((response, idx) => {
+            responses.forEach((row, idx) => {
+                const response = rowToResponse(row);
                 const backupText = response.backup && response.backup.length > 0 
                     ? ` | Backup: ${response.backup.join(', ')} min` 
                     : '';
                 
                 html += `
                     <div class="response-item">
-                        <strong>${response.name}</strong><br>
-                        Preferred: ${response.preferred} min ($${getCost(response.preferred)})${backupText}<br>
-                        <small style="color: #6b7280;">
-                            Available: ${response.availability.map(a => {
-                                const date = new Date(a.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                                return `${date} (${a.from}-${a.until})`;
-                            }).join(', ')}
-                        </small>
+                        <div class="response-item-details">
+                            <strong>${response.name}</strong><br>
+                            Preferred: ${response.preferred} min ($${getCost(response.preferred)})${backupText}<br>
+                            <small style="color: #6b7280;">
+                                Available: ${response.availability.map(a => {
+                                    const date = new Date(a.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                                    return `${date} (${a.from}-${a.until})`;
+                                }).join(', ')}
+                            </small>
+                        </div>
+                        <button type="button" class="btn-secondary" style="margin: 0; white-space: nowrap;" onclick="openAdminEditModal(${idx})">Edit</button>
                     </div>
                 `;
             });
@@ -1746,6 +1878,142 @@
             container.innerHTML = html;
             view.classList.remove('hidden');
         }
+
+        let adminEditingRow = null;
+        let lastViewedResponseRows = [];
+
+        function getTimeSlots() {
+            const slots = [];
+            for (let hour = 8; hour <= 20; hour++) {
+                for (let min = 0; min < 60; min += 30) {
+                    slots.push(`${hour.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}`);
+                }
+            }
+            return slots;
+        }
+
+        function openAdminEditModal(idx) {
+            adminEditingRow = lastViewedResponseRows[idx];
+            if (!adminEditingRow) return;
+            document.getElementById('admin-edit-name').value = row.name || '';
+            document.querySelector(`input[name="admin-edit-preferred"][value="${row.preferred}"]`).checked = true;
+            document.querySelectorAll('input[name="admin-edit-backup"]').forEach(cb => {
+                cb.checked = row.backup && Array.isArray(row.backup) && row.backup.includes(parseInt(cb.value));
+            });
+            adminEditUpdateBackupOptions();
+            renderAdminAvailabilityList(row.availability || []);
+            adminPopulateAddDateDropdown();
+            document.getElementById('admin-edit-modal').classList.remove('hidden');
+        }
+
+        function closeAdminEditModal() {
+            adminEditingRow = null;
+            document.getElementById('admin-edit-modal').classList.add('hidden');
+        }
+
+        function adminEditUpdateBackupOptions() {
+            const preferred = document.querySelector('input[name="admin-edit-preferred"]:checked');
+            if (!preferred) return;
+            const val = preferred.value;
+            document.querySelectorAll('.modal-content .preference-option[data-length]').forEach(opt => {
+                opt.style.display = opt.getAttribute('data-length') === val ? 'none' : 'flex';
+                const cb = opt.querySelector('input[type="checkbox"]');
+                if (opt.getAttribute('data-length') === val) cb.checked = false;
+            });
+        }
+
+        function renderAdminAvailabilityList(availability) {
+            const container = document.getElementById('admin-edit-availability-list');
+            const slots = getTimeSlots();
+            
+            let html = '';
+            availability.forEach((a, i) => {
+                const fromOpts = slots.map(s => `<option value="${s}" ${s === a.from ? 'selected' : ''}>${formatTimeSlot(s)}</option>`).join('');
+                const toOpts = slots.map(s => `<option value="${s}" ${s === a.until ? 'selected' : ''}>${formatTimeSlot(s)}</option>`).join('');
+                const dateLabel = new Date(a.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                html += `<div class="availability-edit-row" data-date="${a.date}">
+                    <span>${dateLabel}</span>
+                    <select data-field="from">${fromOpts}</select>
+                    <select data-field="until">${toOpts}</select>
+                    <button type="button" class="remove-btn" onclick="adminRemoveAvailabilityDate('${a.date}')" title="Remove">×</button>
+                </div>`;
+            });
+            container.innerHTML = html || '<p style="color: #6b7280; font-size: 14px;">No dates added. Use the dropdown below to add.</p>';
+        }
+
+        function adminAddAvailabilityDate() {
+            const sel = document.getElementById('admin-add-date');
+            const dateStr = sel.value;
+            if (!dateStr) return;
+            const avail = adminEditingRow.availability || [];
+            if (avail.some(a => a.date === dateStr)) return;
+            avail.push({ date: dateStr, from: '08:00', until: '20:00' });
+            adminEditingRow.availability = avail;
+            renderAdminAvailabilityList(avail);
+            adminPopulateAddDateDropdown();
+            sel.value = '';
+        }
+
+        function adminRemoveAvailabilityDate(dateStr) {
+            adminEditingRow.availability = (adminEditingRow.availability || []).filter(a => a.date !== dateStr);
+            renderAdminAvailabilityList(adminEditingRow.availability);
+            adminPopulateAddDateDropdown();
+        }
+
+        function adminPopulateAddDateDropdown() {
+            const sel = document.getElementById('admin-add-date');
+            const used = new Set((adminEditingRow.availability || []).map(a => a.date));
+            const available = (adminData.dates || []).map(d => d.date).filter(d => !used.has(d));
+            sel.innerHTML = '<option value="">Add a date...</option>' + 
+                available.map(d => {
+                    const lab = new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    return `<option value="${d}">${lab}</option>`;
+                }).join('');
+        }
+
+        function collectAdminEditData() {
+            const name = document.getElementById('admin-edit-name').value.trim();
+            const preferred = parseInt(document.querySelector('input[name="admin-edit-preferred"]:checked')?.value || 80);
+            const backup = Array.from(document.querySelectorAll('input[name="admin-edit-backup"]:checked')).map(cb => parseInt(cb.value));
+            const availability = [];
+            document.querySelectorAll('.availability-edit-row').forEach(row => {
+                const dateStr = row.dataset.date;
+                if (dateStr) {
+                    const from = row.querySelector('select[data-field="from"]').value;
+                    const until = row.querySelector('select[data-field="until"]').value;
+                    availability.push({ date: dateStr, from, until });
+                }
+            });
+            return { name, preferred, backup, availability };
+        }
+
+        async function saveAdminEdit() {
+            if (!adminEditingRow || !supabaseClient) return;
+            const { name, preferred, backup, availability } = collectAdminEditData();
+            if (!name) {
+                alert('Please enter a name');
+                return;
+            }
+            if (availability.length === 0) {
+                alert('Please add at least one date with availability');
+                return;
+            }
+            const { error } = await supabaseClient
+                .from('resident_responses')
+                .update({ name, preferred, backup: backup.length ? backup : null, availability })
+                .eq('id', adminEditingRow.id);
+
+            if (error) {
+                alert('Error updating: ' + error.message);
+                return;
+            }
+            closeAdminEditModal();
+            viewResponses();
+        }
+
+        document.querySelectorAll('input[name="admin-edit-preferred"]').forEach(r => {
+            r.addEventListener('change', adminEditUpdateBackupOptions);
+        });
 
         // Render calendar immediately when DOM is ready (don't wait for Supabase)
         if (document.readyState === 'loading') {
