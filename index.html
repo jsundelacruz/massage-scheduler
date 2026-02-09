@@ -1895,13 +1895,13 @@
         function openAdminEditModal(idx) {
             adminEditingRow = lastViewedResponseRows[idx];
             if (!adminEditingRow) return;
-            document.getElementById('admin-edit-name').value = row.name || '';
-            document.querySelector(`input[name="admin-edit-preferred"][value="${row.preferred}"]`).checked = true;
+            document.getElementById('admin-edit-name').value = adminEditingRow.name || '';
+            document.querySelector(`input[name="admin-edit-preferred"][value="${adminEditingRow.preferred}"]`).checked = true;
             document.querySelectorAll('input[name="admin-edit-backup"]').forEach(cb => {
-                cb.checked = row.backup && Array.isArray(row.backup) && row.backup.includes(parseInt(cb.value));
+                cb.checked = adminEditingRow.backup && Array.isArray(adminEditingRow.backup) && adminEditingRow.backup.includes(parseInt(cb.value));
             });
             adminEditUpdateBackupOptions();
-            renderAdminAvailabilityList(row.availability || []);
+            renderAdminAvailabilityList(adminEditingRow.availability || []);
             adminPopulateAddDateDropdown();
             document.getElementById('admin-edit-modal').classList.remove('hidden');
         }
