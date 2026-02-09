@@ -77,6 +77,11 @@ create policy "Allow public delete admin_sessions" on admin_sessions for delete 
 create policy "Allow public update resident_responses" on resident_responses for update using (true);
 ```
 
+**Delete support** (admins can remove individual entries):
+```sql
+create policy "Allow public delete resident_responses" on resident_responses for delete using (true);
+```
+
 ## Troubleshooting
 
 **"Supabase not configured"** – Make sure you replaced the placeholder values in `index.html` with your real URL and anon key.

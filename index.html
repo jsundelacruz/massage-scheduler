@@ -1871,7 +1871,10 @@
                                 }).join(', ')}
                             </small>
                         </div>
-                        <button type="button" class="btn-secondary" style="margin: 0; white-space: nowrap;" onclick="openAdminEditModal(${idx})">Edit</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" class="btn-secondary" style="margin: 0; white-space: nowrap;" onclick="openAdminEditModal(${idx})">Edit</button>
+                            <button type="button" class="btn-danger" style="margin: 0; padding: 8px 14px; font-size: 14px;" onclick="deleteResponse('${row.id}')" title="Remove this entry">Delete</button>
+                        </div>
                     </div>
                 `;
             });
@@ -2010,6 +2013,21 @@
                 return;
             }
             closeAdminEditModal();
+            viewResponses();
+        }
+
+        async function deleteResponse(responseId) {
+            if (!confirm('Remove this person\'s entry? This cannot be undone.')) return;
+            if (!supabaseClient) return;
+            const { error } = await supabaseClient
+                .from('resident_responses')
+                .delete()
+                .eq('id', responseId);
+
+            if (error) {
+                alert('Error deleting: ' + error.message);
+                return;
+            }
             viewResponses();
         }
 
