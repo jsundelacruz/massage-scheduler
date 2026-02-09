@@ -106,6 +106,17 @@
         .form-group {
             margin-bottom: 24px;
         }
+        .massage-prefs-section .form-group {
+            margin-bottom: 16px;
+        }
+        .massage-prefs-section .form-group:last-child {
+            margin-bottom: 0;
+        }
+        .backup-description {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0 0 12px 0;
+        }
 
         label {
             display: block;
@@ -246,7 +257,9 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 8px;
+        }
+        .preference-option:last-child {
+            margin-bottom: 0;
         }
 
         .preference-option input[type="radio"],
@@ -609,7 +622,7 @@
                 <div id="time-grid" style="margin-bottom: 16px;"></div>
                 <div style="display: flex; gap: 12px; margin-top: 16px;">
                     <button class="btn-secondary" onclick="clearTimeSelection()">Clear Times</button>
-                    <button class="btn-primary" onclick="saveTimeSelection()">Save Times for This Date</button>
+                    <button class="btn-primary" onclick="document.getElementById('time-selector').classList.add('hidden')">Done</button>
                 </div>
             </div>
             
@@ -619,6 +632,7 @@
             </div>
 
             <h2>Massage Preferences</h2>
+            <div class="massage-prefs-section">
             <div class="form-group">
                 <label>Preferred Length</label>
                 <div class="massage-preferences">
@@ -627,11 +641,11 @@
                         <label for="pref-20">20 min clothed stretches ($30)</label>
                     </div>
                     <div class="preference-option">
-                        <input type="radio" name="preferred-length" value="50" id="pref-50" checked>
+                        <input type="radio" name="preferred-length" value="50" id="pref-50">
                         <label for="pref-50">50 min massage ($70)</label>
                     </div>
                     <div class="preference-option">
-                        <input type="radio" name="preferred-length" value="80" id="pref-80">
+                        <input type="radio" name="preferred-length" value="80" id="pref-80" checked>
                         <label for="pref-80">80 min massage ($110)</label>
                     </div>
                     <div class="preference-option">
@@ -643,8 +657,8 @@
 
             <div class="form-group">
                 <label>Backup Preferences (optional)</label>
-                <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">Select other lengths you'd be willing to do if your preferred time doesn't fit</p>
-                <div class="massage-preferences" style="display: block;">
+                <p class="backup-description">Select other lengths you'd be willing to do if your preferred time doesn't fit</p>
+                <div class="massage-preferences">
                     <div class="preference-option" data-length="20">
                         <input type="checkbox" name="backup-length" value="20" id="backup-20">
                         <label for="backup-20" style="margin: 0;">20 min clothed stretches ($30)</label>
@@ -662,6 +676,7 @@
                         <label for="backup-110" style="margin: 0;">110 min massage ($150)</label>
                     </div>
                 </div>
+            </div>
             </div>
 
             <button class="btn-primary" onclick="submitResidentForm()">Submit Availability</button>
@@ -1228,6 +1243,9 @@
         }
 
         function endDrag() {
+            if (isDragging && currentSelectedDate && !document.getElementById('time-selector').classList.contains('hidden')) {
+                saveTimeSelection(true);
+            }
             isDragging = false;
             dragStartSlot = null;
             window.dragMode = null;
@@ -1246,9 +1264,11 @@
             document.querySelectorAll('.time-slot').forEach(slot => {
                 slot.classList.remove('selected', 'in-range');
             });
+            saveTimeSelection(true);
         }
 
-        function saveTimeSelection() {
+        function saveTimeSelection(keepOpen) {
+            if (!currentSelectedDate) return;
             const selectedSlots = Array.from(document.querySelectorAll('.time-slot.selected'))
                 .map(slot => slot.getAttribute('data-slot'))
                 .sort();
@@ -1265,7 +1285,9 @@
             
             renderResidentCalendar();
             updateAvailabilitySummary();
-            document.getElementById('time-selector').classList.add('hidden');
+            if (!keepOpen) {
+                document.getElementById('time-selector').classList.add('hidden');
+            }
         }
 
         function updateAvailabilitySummary() {
