@@ -1450,20 +1450,17 @@
 
             document.getElementById('resident-output').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-            // Reset form after delay (only for new submissions; when editing, keep data)
-            setTimeout(() => {
-                document.getElementById('resident-output').classList.add('hidden');
-                if (!editingResponseId) {
-                    document.getElementById('resident-name').value = '';
-                    document.querySelectorAll('input[name="backup-length"]').forEach(cb => cb.checked = false);
-                    residentAvailability = {};
-                    renderResidentCalendar();
-                    updateAvailabilitySummary();
-                    document.getElementById('time-selector').classList.add('hidden');
-                    document.querySelector('input[name="preferred-length"][value="80"]').checked = true;
-                    updateBackupOptions();
-                }
-            }, 6000);
+            // Reset form for new submissions (keep success message visible so they can copy the link)
+            if (!editingResponseId) {
+                document.getElementById('resident-name').value = '';
+                document.querySelectorAll('input[name="backup-length"]').forEach(cb => cb.checked = false);
+                residentAvailability = {};
+                renderResidentCalendar();
+                updateAvailabilitySummary();
+                document.getElementById('time-selector').classList.add('hidden');
+                document.querySelector('input[name="preferred-length"][value="80"]').checked = true;
+                updateBackupOptions();
+            }
         }
 
         // Schedule Generation Functions
