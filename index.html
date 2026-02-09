@@ -517,6 +517,12 @@
             <h1>Admin Setup</h1>
             <p class="subtitle">Configure available dates and share the resident form link</p>
 
+            <div id="recent-sessions" class="hidden" style="margin-bottom: 24px; padding: 16px; background: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+                <h3 style="margin-bottom: 12px; font-size: 16px;">Your recent sessions</h3>
+                <p style="color: #6b7280; font-size: 14px; margin-bottom: 12px;">Click to return to a session:</p>
+                <div id="recent-sessions-list"></div>
+            </div>
+
             <div class="form-group">
                 <label>Session Name (optional)</label>
                 <input type="text" id="session-name" placeholder="e.g., February 2026 Massage">
@@ -624,7 +630,7 @@
 
             <div id="resident-output" class="hidden" style="margin-top: 24px;">
                 <div class="alert alert-success">
-                    <strong>Availability confirmed!</strong> Your response has been recorded. We'll notify you once the schedule is finalized.
+                    <strong>Availability confirmed!</strong> Your response has been recorded. The organizer will let you know what date is decided upon.
                 </div>
             </div>
         </div>
@@ -896,11 +902,51 @@
             const residentUrl = baseUrl + '?view=resident&session=' + currentSessionId;
             window.history.replaceState({}, '', adminUrl);
 
+            // Save to recent sessions (localStorage)
+            saveToRecentSessions(session.id, session.session_name);
+
             // Show success message
             const output = document.getElementById('admin-output');
             document.getElementById('form-link').textContent = residentUrl;
             output.classList.remove('hidden');
             updateDeleteButtonVisibility();
+        }
+
+        function saveToRecentSessions(id, name) {
+            try {
+                var list = JSON.parse(localStorage.getItem('massageScheduler_recent') || '[]');
+                list = list.filter(s => s.id !== id);
+                list.unshift({ id, name: name || 'Massage Session', createdAt: new Date().toISOString() });
+                list = list.slice(0, 10);
+                localStorage.setItem('massageScheduler_recent', JSON.stringify(list));
+            } catch (e) {}
+        }
+
+        function loadRecentSessions() {
+            try {
+                var list = JSON.parse(localStorage.getItem('massageScheduler_recent') || '[]');
+                return list;
+            } catch (e) { return []; }
+        }
+
+        function openSession(sessionId) {
+            window.location.href = window.location.href.split('?')[0] + '?session=' + sessionId;
+        }
+
+        function renderRecentSessions() {
+            var container = document.getElementById('recent-sessions');
+            var listEl = document.getElementById('recent-sessions-list');
+            if (!container || !listEl) return;
+            var sessions = loadRecentSessions();
+            if (sessions.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+            listEl.innerHTML = sessions.map(function(s) {
+                var date = new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                return '<a href="#" onclick="openSession(\'' + s.id + '\'); return false;" style="display: block; padding: 8px 12px; margin-bottom: 6px; background: white; border-radius: 6px; border: 1px solid #e5e7eb; text-decoration: none; color: #374151;">' + (s.name || 'Session') + ' <span style="color: #9ca3af; font-size: 13px;">(' + date + ')</span></a>';
+            }).join('');
         }
 
         async function deleteEvent() {
@@ -917,9 +963,17 @@
                 return;
             }
 
+            var deletedId = currentSessionId;
             currentSessionId = null;
             adminData = null;
             residentResponses = [];
+
+            // Remove from recent sessions
+            try {
+                var list = JSON.parse(localStorage.getItem('massageScheduler_recent') || '[]');
+                list = list.filter(function(s) { return s.id !== deletedId; });
+                localStorage.setItem('massageScheduler_recent', JSON.stringify(list));
+            } catch (e) {}
 
             // Clear URL and refresh to show fresh admin setup
             window.location.href = window.location.href.split('?')[0];
@@ -1572,6 +1626,7 @@
                 if (session) {
                     currentSessionId = sessionId;
                     adminData = sessionToAdminData(session);
+                    saveToRecentSessions(session.id, session.session_name);
                     // If admin view, show the resident link so they can copy it again
                     if (view !== 'resident') {
                         const baseUrl = window.location.href.split('?')[0];
@@ -1593,6 +1648,8 @@
             } else {
                 document.getElementById('app-container').classList.remove('resident-view');
             }
+
+            renderRecentSessions();
         });
     </script>
 </body>
