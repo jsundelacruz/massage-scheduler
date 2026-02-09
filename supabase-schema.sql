@@ -43,6 +43,12 @@ create policy "Allow public read resident_responses"
 create policy "Allow public insert resident_responses"
   on resident_responses for insert with check (true);
 
+create policy "Allow public update resident_responses"
+  on resident_responses for update using (true);
+
+-- If you already have the tables, run just this to add update support:
+-- create policy "Allow public update resident_responses" on resident_responses for update using (true);
+
 -- Optional: Create index for faster lookups by session_id
 create index if not exists idx_resident_responses_session_id 
   on resident_responses(session_id);

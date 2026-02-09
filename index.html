@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>House Massage Scheduler</title>
+    <title>Agape Massage Scheduler</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
@@ -558,8 +558,8 @@
 <body>
     <div class="container" id="app-container">
         <div class="tabs">
-            <button class="tab active" onclick="switchTab('admin', event)">1. Admin Setup</button>
-            <button class="tab" onclick="switchTab('resident', event)">2. Resident Form</button>
+            <button class="tab active" onclick="switchTab('admin', event)">1. Organizer Setup</button>
+            <button class="tab" onclick="switchTab('resident', event)">2. Resident Availability</button>
             <button class="tab" onclick="switchTab('schedule', event)">3. View Schedule</button>
         </div>
 
@@ -605,7 +605,7 @@
 
         <!-- RESIDENT FORM TAB -->
         <div id="resident-tab" class="tab-content">
-            <h1>Massage Availability Form</h1>
+            <h1>Agape Massage Availability</h1>
             <p class="subtitle">Let us know when you're available and your massage preferences</p>
 
             <div class="form-group">
@@ -679,11 +679,19 @@
             </div>
             </div>
 
-            <button class="btn-primary" onclick="submitResidentForm()">Submit Availability</button>
+            <button id="resident-submit-btn" class="btn-primary" onclick="submitResidentForm()">Submit Availability</button>
 
             <div id="resident-output" class="hidden" style="margin-top: 24px;">
                 <div class="alert alert-success">
-                    <strong>Availability confirmed!</strong> Your response has been recorded. The organizer will let you know what date is decided upon.
+                    <strong id="resident-output-title">Availability confirmed!</strong>
+                    <p id="resident-output-message" style="margin: 8px 0 0 0;">The organizer will let you know what is the decided date when the schedule is generated.</p>
+                    <div id="resident-edit-link-wrap" class="hidden" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.5);">
+                        <p style="margin: 0 0 8px 0; font-size: 14px;">Save this link to update your availability later:</p>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <div id="resident-edit-link" style="flex: 1; padding: 8px; background: rgba(255,255,255,0.9); border-radius: 6px; font-family: monospace; font-size: 13px; word-break: break-all;"></div>
+                            <button type="button" class="btn-secondary" style="margin: 0; white-space: nowrap;" onclick="navigator.clipboard.writeText(document.getElementById('resident-edit-link').textContent); this.textContent='Copied!'; setTimeout(() => this.textContent='Copy', 2000)">Copy</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -740,6 +748,8 @@
         let adminData = null;
         let residentResponses = [];
         let currentSessionId = null;  // UUID of the active session (from URL or just created)
+        let editingResponseId = null;  // When set, we're editing an existing response
+        let editingResponseData = null; // Cached response data for pre-fill
 
         // Get session ID from URL
         function getSessionIdFromUrl() {
@@ -769,6 +779,18 @@
                 .order('created_at', { ascending: true });
             if (error) return [];
             return data || [];
+        }
+
+        // Load a single response by ID (for editing)
+        async function loadResponseById(responseId) {
+            if (!supabaseClient) return null;
+            const { data, error } = await supabaseClient
+                .from('resident_responses')
+                .select('*')
+                .eq('id', responseId)
+                .single();
+            if (error) return null;
+            return data;
         }
 
         // Convert DB row to adminData format
@@ -1083,6 +1105,33 @@
             }
 
             renderResidentCalendar();
+            if (editingResponseData) prefillResidentForm(editingResponseData);
+            updateResidentSubmitButton();
+        }
+
+        function prefillResidentForm(row) {
+            if (!row) return;
+            document.getElementById('resident-name').value = row.name || '';
+            const preferredRadio = document.querySelector(`input[name="preferred-length"][value="${row.preferred}"]`);
+            if (preferredRadio) preferredRadio.checked = true;
+            document.querySelectorAll('input[name="backup-length"]').forEach(cb => {
+                cb.checked = row.backup && Array.isArray(row.backup) && row.backup.includes(parseInt(cb.value));
+            });
+            residentAvailability = {};
+            (row.availability || []).forEach(avail => {
+                residentAvailability[avail.date] = { from: avail.from, until: avail.until };
+            });
+            renderResidentCalendar();
+            updateAvailabilitySummary();
+            if (Object.keys(residentAvailability).length > 0) {
+                document.getElementById('resident-availability-summary').classList.remove('hidden');
+            }
+            updateBackupOptions();
+        }
+
+        function updateResidentSubmitButton() {
+            const btn = document.getElementById('resident-submit-btn');
+            if (btn) btn.textContent = editingResponseId ? 'Update Availability' : 'Submit Availability';
         }
 
         function renderResidentCalendar() {
@@ -1351,37 +1400,70 @@
                 until: residentAvailability[date].until
             }));
 
-            const { error } = await supabaseClient
-                .from('resident_responses')
-                .insert({
-                    session_id: currentSessionId,
-                    name,
-                    preferred: parseInt(preferred),
-                    backup: backup.length > 0 ? backup : null,
-                    availability
-                });
+            const payload = {
+                name,
+                preferred: parseInt(preferred),
+                backup: backup.length > 0 ? backup : null,
+                availability
+            };
 
-            if (error) {
-                alert('Error submitting: ' + error.message);
-                return;
+            let savedId = editingResponseId;
+
+            if (editingResponseId) {
+                const { error } = await supabaseClient
+                    .from('resident_responses')
+                    .update(payload)
+                    .eq('id', editingResponseId);
+
+                if (error) {
+                    alert('Error updating: ' + error.message);
+                    return;
+                }
+            } else {
+                const { data, error } = await supabaseClient
+                    .from('resident_responses')
+                    .insert({ session_id: currentSessionId, ...payload })
+                    .select('id')
+                    .single();
+
+                if (error) {
+                    alert('Error submitting: ' + error.message);
+                    return;
+                }
+                savedId = data.id;
             }
 
             // Show success
             document.getElementById('resident-output').classList.remove('hidden');
-            
-            // Scroll to confirmation
+            document.getElementById('resident-output-title').textContent = editingResponseId ? 'Availability updated!' : 'Availability confirmed!';
+            document.getElementById('resident-output-message').textContent = 'The organizer will let you know what is the decided date when the schedule is generated.';
+
+            const editLinkWrap = document.getElementById('resident-edit-link-wrap');
+            if (editingResponseId) {
+                editLinkWrap.classList.add('hidden');
+            } else {
+                const baseUrl = window.location.href.split('?')[0];
+                const editUrl = baseUrl + '?view=resident&session=' + currentSessionId + '&edit=' + savedId;
+                document.getElementById('resident-edit-link').textContent = editUrl;
+                editLinkWrap.classList.remove('hidden');
+            }
+
             document.getElementById('resident-output').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            
-            // Reset form after longer delay so they can see the confirmation
+
+            // Reset form after delay (only for new submissions; when editing, keep data)
             setTimeout(() => {
-                document.getElementById('resident-name').value = '';
-                document.querySelectorAll('input[name="backup-length"]').forEach(cb => cb.checked = false);
-                residentAvailability = {};
-                renderResidentCalendar();
-                updateAvailabilitySummary();
-                document.getElementById('time-selector').classList.add('hidden');
                 document.getElementById('resident-output').classList.add('hidden');
-            }, 4000);
+                if (!editingResponseId) {
+                    document.getElementById('resident-name').value = '';
+                    document.querySelectorAll('input[name="backup-length"]').forEach(cb => cb.checked = false);
+                    residentAvailability = {};
+                    renderResidentCalendar();
+                    updateAvailabilitySummary();
+                    document.getElementById('time-selector').classList.add('hidden');
+                    document.querySelector('input[name="preferred-length"][value="80"]').checked = true;
+                    updateBackupOptions();
+                }
+            }, 6000);
         }
 
         // Schedule Generation Functions
@@ -1680,6 +1762,7 @@
             const params = new URLSearchParams(window.location.search);
             const sessionId = params.get('session');
             const view = params.get('view');
+            const editId = params.get('edit');
 
             if (sessionId && supabaseClient) {
                 const session = await loadSession(sessionId);
@@ -1687,6 +1770,14 @@
                     currentSessionId = sessionId;
                     adminData = sessionToAdminData(session);
                     saveToRecentSessions(session.id, session.session_name);
+                    // If resident view with edit link, load existing response
+                    if (view === 'resident' && editId) {
+                        const response = await loadResponseById(editId);
+                        if (response && response.session_id === sessionId) {
+                            editingResponseId = editId;
+                            editingResponseData = response;
+                        }
+                    }
                     // If admin view, show the resident link so they can copy it again
                     if (view !== 'resident') {
                         const baseUrl = window.location.href.split('?')[0];

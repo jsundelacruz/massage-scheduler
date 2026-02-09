@@ -58,16 +58,23 @@ This guide walks you through setting up Supabase so your Massage Scheduler app c
 - **Admin** gets a unique link like `https://yoursite.netlify.app/?view=resident&session=abc-123`
 - **Residents** open that link → they see the calendar with admin's dates
 - **Residents** submit availability → saved to Supabase (linked to that session)
+- **Residents** get a unique edit link after submitting → they can save it and update their availability later if plans change
 - **Admin** opens the schedule tab → fetches all responses and generates the schedule
 
 Each session has its own link, so you can run multiple massage events without data mixing.
 
-## Already set up? Add delete support
+## Already set up? Add missing features
 
-If you ran the schema before the delete feature was added, run this in the SQL Editor to allow deleting events:
+If you ran the schema before, run these in the SQL Editor as needed:
 
+**Delete support** (delete events):
 ```sql
 create policy "Allow public delete admin_sessions" on admin_sessions for delete using (true);
+```
+
+**Edit support** (residents can update their availability):
+```sql
+create policy "Allow public update resident_responses" on resident_responses for update using (true);
 ```
 
 ## Troubleshooting
